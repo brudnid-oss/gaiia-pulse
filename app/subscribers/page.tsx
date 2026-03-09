@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import DetailPageLayout from "@/components/DetailPageLayout";
 import DataTable, { Column } from "@/components/ui/DataTable";
 import StatusBadge from "@/components/ui/StatusBadge";
@@ -64,6 +65,22 @@ const columns: Column<Account>[] = [
 ];
 
 export default function SubscribersPage() {
+  return (
+    <Suspense fallback={
+      <DetailPageLayout title="Subscribers">
+        <div className="flex items-center justify-center h-64">
+          <div className="h-6 w-6 animate-spin rounded-full border-2 border-zinc-700 border-t-emerald-500" />
+        </div>
+      </DetailPageLayout>
+    }>
+      <SubscribersContent />
+    </Suspense>
+  );
+}
+
+function SubscribersContent() {
+  const searchParams = useSearchParams();
+  const statusFilter = searchParams.get("status") || "all";
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -100,6 +117,7 @@ export default function SubscribersPage() {
           key: "status",
           values: ["active", "suspended", "pending", "cancelled"],
         }}
+        defaultFilter={statusFilter}
       />
     </DetailPageLayout>
   );

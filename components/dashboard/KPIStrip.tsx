@@ -29,39 +29,39 @@ export default function KPIStrip({ data, loading }: KPIStripProps) {
         label="Total Subscribers"
         value={formatNumber(data.totalSubscribers)}
         status="normal"
-        href="/subscribers"
+        href="/subscribers?status=active"
       />
       <MetricCard
         label="Monthly Recurring Revenue"
         value={formatCurrency(data.mrr)}
         status="normal"
-        href="/invoices"
+        href="/invoices?status=paid"
       />
       <MetricCard
         label="Open Tickets"
         value={formatNumber(data.openTickets)}
         status={ticketStatus}
-        href="/tickets"
+        href="/tickets?status=open"
       />
       <MetricCard
         label="Pending Orders"
         value={formatNumber(data.pendingOrders)}
         status="normal"
-        href="/orders"
+        href="/orders?status=pending"
       />
       <MetricCard
         label="Overdue Invoices"
         value={formatNumber(data.overdueInvoices)}
         subValue={formatCurrency(data.overdueAmount)}
         status={data.overdueInvoices > 20 ? "critical" : "warning"}
-        href="/invoices"
+        href="/invoices?status=overdue"
       />
       <MetricCard
         label="Churn (This Month)"
         value={data.churnRate > 0 ? formatPercent(data.churnRate) : formatNumber(data.churnCount)}
         subValue={data.churnRate > 0 ? `${data.churnCount} accounts` : undefined}
         status={data.churnRate > 2 ? "critical" : data.churnRate > 1 ? "warning" : "normal"}
-        href="/subscribers"
+        href="/subscribers?status=cancelled"
       />
     </div>
   );

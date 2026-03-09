@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import DetailPageLayout from "@/components/DetailPageLayout";
 import DataTable, { Column } from "@/components/ui/DataTable";
 import StatusBadge from "@/components/ui/StatusBadge";
@@ -53,6 +54,22 @@ const columns: Column<Order>[] = [
 ];
 
 export default function OrdersPage() {
+  return (
+    <Suspense fallback={
+      <DetailPageLayout title="Orders">
+        <div className="flex items-center justify-center h-64">
+          <div className="h-6 w-6 animate-spin rounded-full border-2 border-zinc-700 border-t-emerald-500" />
+        </div>
+      </DetailPageLayout>
+    }>
+      <OrdersContent />
+    </Suspense>
+  );
+}
+
+function OrdersContent() {
+  const searchParams = useSearchParams();
+  const statusFilter = searchParams.get("status") || "all";
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -91,6 +108,7 @@ export default function OrdersPage() {
           key: "status",
           values: ["pending", "in_progress", "completed", "cancelled"],
         }}
+        defaultFilter={statusFilter}
       />
     </DetailPageLayout>
   );

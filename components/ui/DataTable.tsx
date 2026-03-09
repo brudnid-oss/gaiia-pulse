@@ -19,6 +19,7 @@ interface DataTableProps<T> {
   filterOptions?: { label: string; key: string; values: string[] };
   onFilterChange?: (value: string) => void;
   onRowClick?: (item: T) => void;
+  defaultFilter?: string;
 }
 
 export default function DataTable<T>({
@@ -29,12 +30,13 @@ export default function DataTable<T>({
   searchFilter,
   filterOptions,
   onRowClick,
+  defaultFilter = "all",
 }: DataTableProps<T>) {
   const [page, setPage] = useState(0);
   const [search, setSearch] = useState("");
   const [sortCol, setSortCol] = useState<string | null>(null);
   const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
-  const [filter, setFilter] = useState("all");
+  const [filter, setFilter] = useState(defaultFilter);
 
   const filtered = useMemo(() => {
     let result = data;

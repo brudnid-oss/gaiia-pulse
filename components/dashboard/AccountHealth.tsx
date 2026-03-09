@@ -64,13 +64,15 @@ export default function AccountHealth({
         )}
       </ChartCard>
 
-      <ChartCard title="Account Issues" loading={loading} href="/subscribers">
+      <ChartCard title="Account Issues" loading={loading} href="/subscribers?status=suspended">
         {issuesData && (
           <div className="space-y-3">
             {issuesData.map((issue) => (
               <Link
                 key={issue.label}
-                href="/subscribers"
+                href={issue.label.includes("Suspended") ? "/subscribers?status=suspended" :
+                      issue.label.includes("payment") ? "/subscribers?status=active" :
+                      "/subscribers"}
                 className="flex items-center justify-between rounded-md border border-zinc-800 px-3 py-2.5 hover:border-zinc-700 transition-colors"
               >
                 <div className="flex items-center gap-2.5">

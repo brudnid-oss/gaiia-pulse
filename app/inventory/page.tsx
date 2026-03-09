@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import DetailPageLayout from "@/components/DetailPageLayout";
 import DataTable, { Column } from "@/components/ui/DataTable";
 import StatusBadge from "@/components/ui/StatusBadge";
@@ -55,6 +56,22 @@ const columns: Column<InventoryItem>[] = [
 ];
 
 export default function InventoryPage() {
+  return (
+    <Suspense fallback={
+      <DetailPageLayout title="Network Inventory">
+        <div className="flex items-center justify-center h-64">
+          <div className="h-6 w-6 animate-spin rounded-full border-2 border-zinc-700 border-t-emerald-500" />
+        </div>
+      </DetailPageLayout>
+    }>
+      <InventoryContent />
+    </Suspense>
+  );
+}
+
+function InventoryContent() {
+  const searchParams = useSearchParams();
+  const typeFilter = searchParams.get("type") || "all";
   const [items, setItems] = useState<InventoryItem[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -94,6 +111,7 @@ export default function InventoryPage() {
           key: "type",
           values: ["ONT", "router", "switch", "access_point"],
         }}
+        defaultFilter={typeFilter}
       />
     </DetailPageLayout>
   );

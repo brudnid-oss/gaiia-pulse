@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import DetailPageLayout from "@/components/DetailPageLayout";
 import DataTable, { Column } from "@/components/ui/DataTable";
 import StatusBadge from "@/components/ui/StatusBadge";
@@ -66,6 +67,22 @@ const columns: Column<Ticket>[] = [
 ];
 
 export default function TicketsPage() {
+  return (
+    <Suspense fallback={
+      <DetailPageLayout title="Tickets">
+        <div className="flex items-center justify-center h-64">
+          <div className="h-6 w-6 animate-spin rounded-full border-2 border-zinc-700 border-t-emerald-500" />
+        </div>
+      </DetailPageLayout>
+    }>
+      <TicketsContent />
+    </Suspense>
+  );
+}
+
+function TicketsContent() {
+  const searchParams = useSearchParams();
+  const statusFilter = searchParams.get("status") || "all";
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -104,6 +121,7 @@ export default function TicketsPage() {
           key: "status",
           values: ["open", "in_progress", "resolved", "closed"],
         }}
+        defaultFilter={statusFilter}
       />
     </DetailPageLayout>
   );

@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import DetailPageLayout from "@/components/DetailPageLayout";
 import DataTable, { Column } from "@/components/ui/DataTable";
 import StatusBadge from "@/components/ui/StatusBadge";
@@ -59,6 +60,22 @@ const columns: Column<Invoice>[] = [
 ];
 
 export default function InvoicesPage() {
+  return (
+    <Suspense fallback={
+      <DetailPageLayout title="Invoices">
+        <div className="flex items-center justify-center h-64">
+          <div className="h-6 w-6 animate-spin rounded-full border-2 border-zinc-700 border-t-emerald-500" />
+        </div>
+      </DetailPageLayout>
+    }>
+      <InvoicesContent />
+    </Suspense>
+  );
+}
+
+function InvoicesContent() {
+  const searchParams = useSearchParams();
+  const statusFilter = searchParams.get("status") || "all";
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -101,6 +118,7 @@ export default function InvoicesPage() {
           key: "status",
           values: ["paid", "unpaid", "overdue", "void"],
         }}
+        defaultFilter={statusFilter}
       />
     </DetailPageLayout>
   );
