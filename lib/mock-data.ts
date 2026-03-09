@@ -15,14 +15,20 @@ import {
   InventorySummaryData,
 } from "./types";
 
-// ── Helpers ──────────────────────────────────────────────────────────────────
+// ── Seeded RNG (stable across runs) ──────────────────────────────────────────
+
+let _seed = 42;
+function seededRandom(): number {
+  _seed = (_seed * 16807 + 0) % 2147483647;
+  return (_seed - 1) / 2147483646;
+}
 
 function randomDate(daysBack: number): string {
-  return new Date(Date.now() - Math.random() * daysBack * 86400000).toISOString();
+  return new Date(Date.now() - seededRandom() * daysBack * 86400000).toISOString();
 }
 
 function pick<T>(arr: T[]): T {
-  return arr[Math.floor(Math.random() * arr.length)];
+  return arr[Math.floor(seededRandom() * arr.length)];
 }
 
 const firstNames = [
@@ -257,17 +263,69 @@ function generateInventory(): InventoryItem[] {
 
 export const mockInventoryItems: InventoryItem[] = generateInventory();
 
-// ── Aggregated data (used by dashboard summary) ──────────────────────────────
+// ── Aggregated data (ALL derived from generated lists — single source of truth)
+
+function countBy<T>(arr: T[], key: keyof T): Record<string, number> {
+  const counts: Record<string, number> = {};
+  for (const item of arr) {
+    const val = String(item[key]);
+    counts[val] = (counts[val] || 0) + 1;
+  }
+  return counts;
+}
+
+function sumBy<T>(arr: T[], amountKey: keyof T): number {
+  return arr.reduce((sum, item) => sum + (Number(item[amountKey]) || 0), 0);
+}
+
+// Account counts
+const accountsByStatus = countBy(mockAccounts, "status");
+const activeCount = accountsByStatus["active"] || 0;
+const cancelledCount = accountsByStatus["cancelled"] || 0;
+const suspendedCount = accountsByStatus["suspended"] || 0;
+const pendingAccountCount = accountsByStatus["pending"] || 0;
+const noPaymentCount = mockAccounts.filter((a) => a.status === "active" && !a.payment_method_on_file).length;
+
+// Ticket counts
+const ticketsByStatus = countBy(mockTickets, "status");
+const openTicketCount = ticketsByStatus["open"] || 0;
+const inProgressTicketCount = ticketsByStatus["in_progress"] || 0;
+const resolvedTicketCount = ticketsByStatus["resolved"] || 0;
+const closedTicketCount = ticketsByStatus["closed"] || 0;
+
+// Order counts
+const ordersByStatus = countBy(mockOrders, "status");
+const pendingOrderCount = ordersByStatus["pending"] || 0;
+const inProgressOrderCount = ordersByStatus["in_progress"] || 0;
+const completedOrderCount = ordersByStatus["completed"] || 0;
+const cancelledOrderCount = ordersByStatus["cancelled"] || 0;
+
+const activeOrders = mockOrders.filter((o) => o.status === "pending" || o.status === "in_progress");
+const ordersByType = countBy(activeOrders, "type");
+
+// Invoice counts
+const invoicesByStatus = countBy(mockInvoices, "status");
+const paidInvoices = mockInvoices.filter((i) => i.status === "paid");
+const unpaidInvoices = mockInvoices.filter((i) => i.status === "unpaid");
+const overdueInvoices = mockInvoices.filter((i) => i.status === "overdue");
+const voidInvoices = mockInvoices.filter((i) => i.status === "void");
+const overdueAmount = sumBy(overdueInvoices, "amount");
+
+// MRR: average of paid invoices this month (simplified)
+const mrr = Math.round(sumBy(paidInvoices.slice(0, activeCount), "amount") / Math.max(paidInvoices.length / activeCount, 1));
+
+// Inventory counts
+const inventoryByType = countBy(mockInventoryItems, "type");
 
 export const mockKPIs: KPIData = {
-  totalSubscribers: 2100,
-  mrr: 175420,
-  openTickets: 35,
-  pendingOrders: 20,
-  overdueInvoices: 45,
-  overdueAmount: 12340,
-  churnCount: 18,
-  churnRate: 0.86,
+  totalSubscribers: activeCount,
+  mrr: mrr || 175420,
+  openTickets: openTicketCount + inProgressTicketCount,
+  pendingOrders: pendingOrderCount + inProgressOrderCount,
+  overdueInvoices: overdueInvoices.length,
+  overdueAmount: overdueAmount,
+  churnCount: cancelledCount,
+  churnRate: Number(((cancelledCount / (activeCount + cancelledCount)) * 100).toFixed(1)),
 };
 
 export const mockRevenueHistory: RevenueDataPoint[] = (() => {
@@ -277,50 +335,49 @@ export const mockRevenueHistory: RevenueDataPoint[] = (() => {
   ];
   let revenue = 131000;
   return months.map((month) => {
-    revenue = Math.round(revenue * (1 + 0.04 + Math.random() * 0.02));
+    revenue = Math.round(revenue * (1 + 0.04 + seededRandom() * 0.02));
     return { month, revenue };
   });
 })();
 
 export const mockInvoiceStatus: InvoiceStatusData[] = [
-  { status: "Paid", count: 1870, amount: 148900 },
-  { status: "Unpaid", count: 176, amount: 14200 },
-  { status: "Overdue", count: 110, amount: 12340 },
-  { status: "Void", count: 44, amount: 3520 },
+  { status: "Paid", count: paidInvoices.length, amount: sumBy(paidInvoices, "amount") },
+  { status: "Unpaid", count: unpaidInvoices.length, amount: sumBy(unpaidInvoices, "amount") },
+  { status: "Overdue", count: overdueInvoices.length, amount: overdueAmount },
+  { status: "Void", count: voidInvoices.length, amount: sumBy(voidInvoices, "amount") },
 ];
 
 export const mockAccountStatus: AccountStatusData[] = [
-  { status: "Active", count: 2100 },
-  { status: "Suspended", count: 150 },
-  { status: "Pending", count: 100 },
-  { status: "Cancelled", count: 150 },
+  { status: "Active", count: activeCount },
+  { status: "Suspended", count: suspendedCount },
+  { status: "Pending", count: pendingAccountCount },
+  { status: "Cancelled", count: cancelledCount },
 ];
 
 export const mockTicketStatus: TicketStatusData[] = [
-  { status: "Open", count: 35 },
-  { status: "In Progress", count: 15 },
-  { status: "Resolved", count: 128 },
-  { status: "Closed", count: 412 },
+  { status: "Open", count: openTicketCount },
+  { status: "In Progress", count: inProgressTicketCount },
+  { status: "Resolved", count: resolvedTicketCount },
+  { status: "Closed", count: closedTicketCount },
 ];
 
 export const mockOrderStatus: OrderStatusData[] = [
-  { status: "Pending", count: 12 },
-  { status: "In Progress", count: 8 },
-  { status: "Completed", count: 156 },
-  { status: "Cancelled", count: 14 },
+  { status: "Pending", count: pendingOrderCount },
+  { status: "In Progress", count: inProgressOrderCount },
+  { status: "Completed", count: completedOrderCount },
+  { status: "Cancelled", count: cancelledOrderCount },
 ];
 
 export const mockOrderTypes: OrderTypeData[] = [
-  { type: "New Install", count: 14 },
-  { type: "Upgrade", count: 4 },
-  { type: "Disconnect", count: 2 },
+  { type: "New Install", count: ordersByType["new_install"] || 0 },
+  { type: "Upgrade", count: ordersByType["upgrade"] || 0 },
+  { type: "Disconnect", count: ordersByType["disconnect"] || 0 },
 ];
 
 export const mockAccountIssues: AccountIssue[] = [
-  { label: "No payment method on file", count: 23, severity: "warning" },
-  { label: "Suspended accounts", count: 150, severity: "critical" },
-  { label: "Overdue balance > 60 days", count: 18, severity: "critical" },
-  { label: "Failed auto-pay last cycle", count: 9, severity: "warning" },
+  { label: "No payment method on file", count: noPaymentCount, severity: "warning" as const },
+  { label: "Suspended accounts", count: suspendedCount, severity: "critical" as const },
+  { label: "Overdue balance > 60 days", count: overdueInvoices.length, severity: "critical" as const },
 ];
 
 export const mockRecentTickets: Ticket[] = mockTickets.filter(
@@ -330,11 +387,11 @@ export const mockRecentTickets: Ticket[] = mockTickets.filter(
 export const mockRecentOrders: Order[] = mockOrders.slice(0, 5);
 
 export const mockInventory: InventorySummaryData = {
-  total: 3240,
+  total: mockInventoryItems.length,
   byType: [
-    { type: "ONT", count: 2180 },
-    { type: "Router", count: 640 },
-    { type: "Switch", count: 280 },
-    { type: "Access Point", count: 140 },
+    { type: "ONT", count: inventoryByType["ONT"] || 0 },
+    { type: "Router", count: inventoryByType["router"] || 0 },
+    { type: "Switch", count: inventoryByType["switch"] || 0 },
+    { type: "Access Point", count: inventoryByType["access_point"] || 0 },
   ],
 };
