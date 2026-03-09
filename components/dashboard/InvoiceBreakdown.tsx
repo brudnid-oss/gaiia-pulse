@@ -4,6 +4,7 @@ import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
 import ChartCard from "../ui/ChartCard";
 import { InvoiceStatusData } from "@/lib/types";
 import { formatCurrency, formatNumber } from "@/lib/formatters";
+import { tooltipStyle } from "@/lib/chart-theme";
 
 interface InvoiceBreakdownProps {
   data: InvoiceStatusData[] | null;
@@ -19,7 +20,7 @@ const COLORS: Record<string, string> = {
 
 export default function InvoiceBreakdown({ data, loading }: InvoiceBreakdownProps) {
   return (
-    <ChartCard title="Invoice Status Breakdown" loading={loading}>
+    <ChartCard title="Invoice Status Breakdown" loading={loading} href="/invoices">
       {data && (
         <div className="flex items-center gap-4">
           <ResponsiveContainer width="50%" height={220}>
@@ -39,12 +40,7 @@ export default function InvoiceBreakdown({ data, loading }: InvoiceBreakdownProp
                 ))}
               </Pie>
               <Tooltip
-                contentStyle={{
-                  backgroundColor: "#18181b",
-                  border: "1px solid #3f3f46",
-                  borderRadius: "8px",
-                  fontSize: "12px",
-                }}
+                {...tooltipStyle}
                 formatter={(value: any, name: any) => [formatNumber(value), name]}
               />
             </PieChart>

@@ -11,6 +11,7 @@ import {
 import ChartCard from "../ui/ChartCard";
 import { InventorySummaryData } from "@/lib/types";
 import { formatNumber } from "@/lib/formatters";
+import { tooltipStyle } from "@/lib/chart-theme";
 
 interface InventorySummaryProps {
   data: InventorySummaryData | null;
@@ -19,7 +20,7 @@ interface InventorySummaryProps {
 
 export default function InventorySummary({ data, loading }: InventorySummaryProps) {
   return (
-    <ChartCard title="Network Inventory" loading={loading}>
+    <ChartCard title="Network Inventory" loading={loading} href="/inventory">
       {data && (
         <div className="space-y-3">
           <div className="flex items-baseline gap-2">
@@ -42,12 +43,7 @@ export default function InventorySummary({ data, loading }: InventorySummaryProp
                 axisLine={false}
               />
               <Tooltip
-                contentStyle={{
-                  backgroundColor: "#18181b",
-                  border: "1px solid #3f3f46",
-                  borderRadius: "8px",
-                  fontSize: "12px",
-                }}
+                {...tooltipStyle}
                 formatter={(value: any) => [formatNumber(value), "Devices"]}
               />
               <Bar dataKey="count" fill="#00C853" radius={[4, 4, 0, 0]} />

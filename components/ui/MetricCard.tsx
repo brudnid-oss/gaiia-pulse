@@ -1,5 +1,7 @@
 "use client";
 
+import Link from "next/link";
+
 interface MetricCardProps {
   label: string;
   value: string;
@@ -7,6 +9,7 @@ interface MetricCardProps {
   trend?: "up" | "down" | "neutral";
   status?: "normal" | "warning" | "critical" | "good";
   loading?: boolean;
+  href?: string;
 }
 
 export default function MetricCard({
@@ -15,6 +18,7 @@ export default function MetricCard({
   subValue,
   status = "normal",
   loading = false,
+  href,
 }: MetricCardProps) {
   const statusColors = {
     normal: "text-zinc-100",
@@ -33,8 +37,8 @@ export default function MetricCard({
     );
   }
 
-  return (
-    <div className="rounded-lg border border-zinc-800 bg-zinc-900/50 p-4 sm:p-5 hover:border-zinc-700 transition-colors">
+  const content = (
+    <>
       <p className="text-xs font-medium uppercase tracking-wider text-zinc-500 mb-1">
         {label}
       </p>
@@ -44,6 +48,28 @@ export default function MetricCard({
       {subValue && (
         <p className="text-xs text-zinc-500 mt-1 font-mono">{subValue}</p>
       )}
+      {href && (
+        <p className="text-[10px] text-zinc-600 mt-2 group-hover:text-emerald-500 transition-colors">
+          View details →
+        </p>
+      )}
+    </>
+  );
+
+  if (href) {
+    return (
+      <Link
+        href={href}
+        className="group block rounded-lg border border-zinc-800 bg-zinc-900/50 p-4 sm:p-5 hover:border-emerald-500/30 hover:bg-zinc-900/80 transition-all"
+      >
+        {content}
+      </Link>
+    );
+  }
+
+  return (
+    <div className="rounded-lg border border-zinc-800 bg-zinc-900/50 p-4 sm:p-5 hover:border-zinc-700 transition-colors">
+      {content}
     </div>
   );
 }

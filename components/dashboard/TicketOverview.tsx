@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import {
   BarChart,
   Bar,
@@ -13,6 +14,7 @@ import ChartCard from "../ui/ChartCard";
 import StatusBadge from "../ui/StatusBadge";
 import { TicketStatusData, Ticket } from "@/lib/types";
 import { formatNumber, formatRelativeTime } from "@/lib/formatters";
+import { tooltipStyle } from "@/lib/chart-theme";
 
 interface TicketOverviewProps {
   statusData: TicketStatusData[] | null;
@@ -33,7 +35,7 @@ export default function TicketOverview({
   loading,
 }: TicketOverviewProps) {
   return (
-    <ChartCard title="Support Tickets" loading={loading}>
+    <ChartCard title="Support Tickets" loading={loading} href="/tickets">
       {statusData && recentTickets && (
         <div className="space-y-4">
           <ResponsiveContainer width="100%" height={120}>
@@ -52,12 +54,7 @@ export default function TicketOverview({
                 width={80}
               />
               <Tooltip
-                contentStyle={{
-                  backgroundColor: "#18181b",
-                  border: "1px solid #3f3f46",
-                  borderRadius: "8px",
-                  fontSize: "12px",
-                }}
+                {...tooltipStyle}
                 formatter={(value: any) => [formatNumber(value), "Tickets"]}
               />
               <Bar dataKey="count" radius={[0, 4, 4, 0]} barSize={16}>
@@ -74,8 +71,9 @@ export default function TicketOverview({
             </p>
             <div className="space-y-2">
               {recentTickets.map((ticket) => (
-                <div
+                <Link
                   key={ticket.id}
+                  href="/tickets"
                   className="flex items-start justify-between gap-2 rounded-md border border-zinc-800/50 px-3 py-2 hover:border-zinc-700 transition-colors"
                 >
                   <div className="min-w-0 flex-1">
@@ -89,7 +87,7 @@ export default function TicketOverview({
                   <span className="text-[10px] font-mono text-zinc-600 whitespace-nowrap">
                     {formatRelativeTime(ticket.created_at)}
                   </span>
-                </div>
+                </Link>
               ))}
             </div>
           </div>

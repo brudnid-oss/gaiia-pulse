@@ -12,6 +12,7 @@ import {
 import ChartCard from "../ui/ChartCard";
 import { RevenueDataPoint } from "@/lib/types";
 import { formatCurrency } from "@/lib/formatters";
+import { tooltipStyle } from "@/lib/chart-theme";
 
 interface RevenueChartProps {
   data: RevenueDataPoint[] | null;
@@ -20,7 +21,7 @@ interface RevenueChartProps {
 
 export default function RevenueChart({ data, loading }: RevenueChartProps) {
   return (
-    <ChartCard title="Revenue — Last 12 Months" loading={loading}>
+    <ChartCard title="Revenue — Last 12 Months" loading={loading} href="/invoices">
       {data && (
         <ResponsiveContainer width="100%" height={240}>
           <AreaChart data={data} margin={{ top: 5, right: 5, left: -10, bottom: 0 }}>
@@ -44,13 +45,7 @@ export default function RevenueChart({ data, loading }: RevenueChartProps) {
               tickFormatter={(v) => `$${(v / 1000).toFixed(0)}k`}
             />
             <Tooltip
-              contentStyle={{
-                backgroundColor: "#18181b",
-                border: "1px solid #3f3f46",
-                borderRadius: "8px",
-                fontSize: "12px",
-              }}
-              labelStyle={{ color: "#a1a1aa" }}
+              {...tooltipStyle}
               formatter={(value: any) => [formatCurrency(value), "Revenue"]}
             />
             <Area
