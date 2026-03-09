@@ -7,6 +7,18 @@ export interface Account {
   cancelled_at?: string;
   balance: number;
   payment_method_on_file: boolean;
+  // Layer 3 detail fields
+  phone?: string;
+  address?: string;
+  city?: string;
+  state?: string;
+  zip?: string;
+  plan?: string;
+  plan_price?: number;
+  payment_method_type?: string;
+  payment_method_last4?: string;
+  notes?: string;
+  labels?: string[];
 }
 
 export interface Order {
@@ -18,6 +30,10 @@ export interface Order {
   created_at: string;
   completed_at?: string;
   product_name: string;
+  // Layer 3 detail fields
+  assigned_to?: string;
+  notes?: string;
+  scheduled_date?: string;
 }
 
 export interface Invoice {
@@ -29,6 +45,10 @@ export interface Invoice {
   due_date: string;
   paid_at?: string;
   created_at: string;
+  // Layer 3 detail fields
+  line_items?: { description: string; amount: number }[];
+  payment_method?: string;
+  notes?: string;
 }
 
 export interface Payment {
@@ -54,6 +74,19 @@ export interface Ticket {
   priority: "low" | "medium" | "high" | "critical";
   created_at: string;
   resolved_at?: string;
+  // Layer 3 detail fields
+  description?: string;
+  assigned_to?: string;
+  category?: string;
+  comments?: TicketComment[];
+}
+
+export interface TicketComment {
+  id: string;
+  author: string;
+  author_role: "agent" | "customer" | "system";
+  body: string;
+  created_at: string;
 }
 
 export interface InventoryItem {

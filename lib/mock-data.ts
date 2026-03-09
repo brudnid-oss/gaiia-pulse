@@ -2,6 +2,7 @@ import {
   Account,
   Invoice,
   Ticket,
+  TicketComment,
   Order,
   InventoryItem,
   KPIData,
@@ -79,6 +80,85 @@ const ticketSubjects = [
   "Latency spikes during gaming",
 ];
 
+const streets = [
+  "Oak St", "Maple Ave", "Cedar Ln", "Pine Dr", "Elm Blvd", "Birch Ct",
+  "Walnut Way", "Spruce Rd", "Ash Pl", "Willow Cir", "Main St", "Park Ave",
+  "Lake Dr", "River Rd", "Hill St", "Valley View", "Sunset Blvd", "Highland Ave",
+];
+const cities = [
+  "Springfield", "Riverside", "Fairview", "Georgetown", "Brookfield",
+  "Lakewood", "Greenville", "Maplewood", "Cedarville", "Hillcrest",
+];
+const states = ["CA", "TX", "FL", "NY", "IL", "PA", "OH", "GA", "NC", "MI"];
+
+const ticketCategories = [
+  "Network Issue", "Billing", "Service Request", "Equipment", "Installation", "Account Management",
+];
+const ticketDescriptions: Record<string, string> = {
+  "Intermittent connection drops": "Customer reports that their internet connection drops multiple times per day, usually lasting 2-5 minutes each time. They've restarted the router and ONT with no improvement. Issue started approximately one week ago. Customer works from home and this is significantly impacting their productivity.",
+  "Slow speeds during peak hours": "Customer is experiencing significantly reduced speeds between 6 PM and 11 PM. Speed tests show ~50 Mbps down during peak vs. their subscribed 500 Mbps plan. Off-peak speeds are normal. Customer has tested with both Wi-Fi and direct Ethernet connection to ONT — same results.",
+  "ONT light blinking red — no internet": "Customer reports the PON light on their ONT is blinking red and they have no internet connectivity. All other lights appear normal. No known outages in the area. Customer has power-cycled the ONT twice with no change. Issue began this morning.",
+  "Request to upgrade plan": "Customer would like to upgrade from their current plan to a higher tier. They've been experiencing that their current speeds are insufficient for their household of 5 with multiple streaming devices and remote work.",
+  "Billing discrepancy on invoice": "Customer noticed a charge on their latest invoice that doesn't match their plan rate. They believe they were charged for a higher tier plan than what they're subscribed to. Requesting review and adjustment if needed.",
+  "Cannot connect new device to Wi-Fi": "Customer purchased a new laptop and is unable to connect it to their Wi-Fi network. All other devices are working fine. They've tried entering the password multiple times and also tried connecting to both 2.4 GHz and 5 GHz bands.",
+  "Request for static IP address": "Business customer requesting a static IP address for hosting purposes. They need to run a small server for their business application. Requesting information on pricing and provisioning timeline.",
+  "Service outage after storm": "Customer lost internet service after last night's thunderstorm. ONT appears to have power but no connectivity lights. Neighbors on the same street are also reporting issues. Possible fiber cut or equipment damage at the node.",
+  "Router not broadcasting 5GHz band": "Customer reports that their router's 5 GHz network has disappeared from the available networks list. The 2.4 GHz band is still working. They haven't changed any settings. Router was provided by us during installation.",
+  "Need to reschedule installation": "New customer needs to reschedule their fiber installation appointment from this Thursday to next week. They have a conflict with their current appointment time. Requesting available slots for Monday through Wednesday.",
+  "Account billing address change": "Customer has moved within our service area and needs their billing address updated. Service address remains the same. New billing address provided via secure form.",
+  "Speed test not matching plan": "Customer on our 1 Gbps plan is consistently seeing speeds of only 200-300 Mbps on speed tests. They're testing via Ethernet directly connected to the ONT. This has been ongoing for about two weeks.",
+  "Frequent DNS resolution failures": "Customer experiencing intermittent DNS resolution failures causing websites to fail to load. Issue resolves temporarily when they manually set DNS to 8.8.8.8 but reverts after router restart. Affecting all devices on the network.",
+  "TV streaming buffering issues": "Customer reports constant buffering when streaming 4K content on Netflix and YouTube TV. They're on a 500 Mbps plan. Regular browsing and downloads work fine. Issue is consistent across multiple streaming devices.",
+  "Request for service downgrade": "Customer would like to downgrade from Fiber 1 Gbps to Fiber 250 Mbps to reduce their monthly bill. They feel the lower tier is sufficient for their current usage. Requesting effective date for next billing cycle.",
+  "Payment not reflected on account": "Customer made a payment 5 business days ago but it's still not reflected on their account balance. They paid via bank transfer and have confirmation from their bank. Payment reference number provided.",
+  "Need technician visit for wiring": "Customer needs internal wiring work done. They'd like to add an Ethernet run from their living room to their home office, approximately 50 feet. Requesting a technician visit to assess and complete the work.",
+  "Ethernet port not working on ONT": "Customer reports that port 2 on their ONT has stopped working. Port 1 still works fine. They've tried multiple cables and devices on port 2 with no success. ONT model is Nokia G-010G-T.",
+  "Request to add second access point": "Customer has a large home and is experiencing weak Wi-Fi signal in their upstairs bedrooms. They'd like to add a second access point. Requesting options and pricing for mesh extension.",
+  "Latency spikes during gaming": "Customer experiencing latency spikes of 200-500ms while gaming online, occurring every few minutes. Normal latency is around 10-15ms. Issue is consistent across multiple games and gaming platforms. Wired connection directly to ONT.",
+};
+
+const agentNames = ["Alex Rivera", "Sam Chen", "Jordan Park", "Morgan Lee", "Taylor Kim", "Casey Nguyen"];
+
+const commentTemplates = {
+  agent: [
+    "I've reviewed the account and can see the issue. Let me escalate this to our network team for further investigation.",
+    "I've run a diagnostic on the line and everything looks clean from our end. Can you confirm if the issue is still occurring?",
+    "I've scheduled a technician visit for this. You should receive a confirmation email shortly with the appointment details.",
+    "I've applied a credit to the account for the inconvenience. The adjustment will appear on your next invoice.",
+    "I've updated the account settings as requested. The changes should take effect within the next 15 minutes.",
+    "Our network team has identified and resolved an issue at the local node. Please let us know if you're still experiencing problems.",
+    "I've checked our monitoring tools and can confirm there was a brief outage in your area. Service has been restored.",
+  ],
+  customer: [
+    "Thank you for looking into this. The issue is still happening as of this morning.",
+    "That seems to have fixed it! Everything is working great now. Thanks for the quick response.",
+    "I've restarted the equipment as suggested but the problem persists. What should I try next?",
+    "The technician came by and fixed the issue. Internet is back to normal speeds. Thank you!",
+    "I'm still seeing the same problem. Is there anything else we can try?",
+    "Just wanted to confirm — the credit showed up on my account. Appreciate the help!",
+  ],
+  system: [
+    "Ticket automatically escalated due to SLA threshold.",
+    "Status changed from Open to In Progress.",
+    "Technician dispatch scheduled.",
+    "Customer contacted via email — awaiting response.",
+    "Network diagnostic completed — no issues detected on trunk line.",
+  ],
+};
+
+const orderNotes = [
+  "Customer prefers morning installation window (8 AM - 12 PM).",
+  "Building requires access code: #4521. Contact property manager if issues.",
+  "Underground conduit already in place from previous provider.",
+  "Customer requested specific router model — Ubiquiti Dream Machine.",
+  "Multi-dwelling unit — fiber already terminated in utility room.",
+  "Customer will be working from home, needs minimal downtime.",
+  "Previous installation attempt failed due to access issue — rescheduled.",
+  "Aerial fiber drop required — pole attachment permit obtained.",
+];
+
+const techNames = ["Mike Torres", "Sarah Kim", "Dave Patel", "Lisa Chen", "Tom Rivera", "Amy Nguyen"];
+
 const deviceModels: Record<string, string[]> = {
   ONT: ["Nokia G-010G-T", "Calix 716GE-I", "Zhone 2426", "Adtran 411"],
   router: ["TP-Link AX6000", "Ubiquiti Dream Machine", "Eero Pro 6E", "Calix GigaSpire"],
@@ -101,6 +181,9 @@ function generateAccounts(): Account[] {
     const first = pick(firstNames);
     const last = pick(lastNames);
     const status = statusDist[i];
+    const plan = pick(plans);
+    const hasPayment = status === "active" ? seededRandom() > 0.01 : seededRandom() > 0.3;
+    const paymentTypes = ["Visa", "Mastercard", "Amex", "ACH Bank Transfer"];
     accounts.push({
       id: `ACC-${String(i + 1).padStart(4, "0")}`,
       name: `${first} ${last}`,
@@ -108,9 +191,19 @@ function generateAccounts(): Account[] {
       status,
       created_at: randomDate(730),
       cancelled_at: status === "cancelled" ? randomDate(90) : undefined,
-      balance: status === "suspended" ? Math.round(Math.random() * 300 + 50) :
-               status === "active" ? (Math.random() > 0.85 ? Math.round(Math.random() * 200) : 0) : 0,
-      payment_method_on_file: status === "active" ? Math.random() > 0.01 : Math.random() > 0.3,
+      balance: status === "suspended" ? Math.round(seededRandom() * 300 + 50) :
+               status === "active" ? (seededRandom() > 0.85 ? Math.round(seededRandom() * 200) : 0) : 0,
+      payment_method_on_file: hasPayment,
+      phone: `(${String(200 + Math.floor(seededRandom() * 800))}) ${String(200 + Math.floor(seededRandom() * 800))}-${String(1000 + Math.floor(seededRandom() * 9000))}`,
+      address: `${Math.floor(seededRandom() * 9000 + 100)} ${pick(streets)}`,
+      city: pick(cities),
+      state: pick(states),
+      zip: String(10000 + Math.floor(seededRandom() * 90000)),
+      plan,
+      plan_price: planPrices[plan],
+      payment_method_type: hasPayment ? pick(paymentTypes) : undefined,
+      payment_method_last4: hasPayment ? String(1000 + Math.floor(seededRandom() * 9000)) : undefined,
+      labels: seededRandom() > 0.7 ? [pick(["Residential", "Business", "MDU", "VIP", "New Customer"])] : [],
     });
   }
   return accounts;
@@ -135,17 +228,42 @@ function generateTickets(): Ticket[] {
     const created = status === "open" || status === "in_progress"
       ? randomDate(14)
       : randomDate(180);
+    const subject = pick(ticketSubjects);
+    const agent = pick(agentNames);
+    const createdDate = new Date(created);
+
+    // Generate 1-5 comments per ticket
+    const numComments = Math.floor(seededRandom() * 4) + 1;
+    const comments: TicketComment[] = [];
+    let commentTime = createdDate.getTime() + 30 * 60000; // 30 min after creation
+    for (let c = 0; c < numComments; c++) {
+      const role: TicketComment["author_role"] = c === 0 ? "agent" : pick(["agent", "customer", "customer", "system"]);
+      const templates = commentTemplates[role];
+      comments.push({
+        id: `CMT-${String(i * 10 + c + 1).padStart(5, "0")}`,
+        author: role === "agent" ? agent : role === "customer" ? acc.name : "System",
+        author_role: role,
+        body: pick(templates),
+        created_at: new Date(commentTime).toISOString(),
+      });
+      commentTime += (seededRandom() * 24 + 1) * 3600000; // 1-25 hours between comments
+    }
+
     tickets.push({
       id: `TK-${String(1000 + statuses.length - i).padStart(4, "0")}`,
       account_id: acc.id,
       account_name: acc.name,
-      subject: pick(ticketSubjects),
+      subject,
       status,
       priority: pick(["low", "medium", "medium", "high", "high", "critical"]),
       created_at: created,
       resolved_at: status === "resolved" || status === "closed"
-        ? new Date(new Date(created).getTime() + Math.random() * 7 * 86400000).toISOString()
+        ? new Date(createdDate.getTime() + seededRandom() * 7 * 86400000).toISOString()
         : undefined,
+      description: ticketDescriptions[subject] || "Customer reported an issue requiring investigation. Details to be gathered during initial triage.",
+      assigned_to: status !== "closed" || seededRandom() > 0.3 ? agent : undefined,
+      category: pick(ticketCategories),
+      comments,
     });
   }
   return tickets.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
@@ -174,6 +292,7 @@ function generateOrders(): Order[] {
     const created = status === "pending" || status === "in_progress"
       ? randomDate(14)
       : randomDate(365);
+    const scheduledDate = new Date(new Date(created).getTime() + seededRandom() * 14 * 86400000);
     orders.push({
       id: `ORD-${String(3000 + statuses.length - i).padStart(4, "0")}`,
       account_id: acc.id,
@@ -182,9 +301,12 @@ function generateOrders(): Order[] {
       status,
       created_at: created,
       completed_at: status === "completed"
-        ? new Date(new Date(created).getTime() + Math.random() * 14 * 86400000).toISOString()
+        ? new Date(new Date(created).getTime() + seededRandom() * 14 * 86400000).toISOString()
         : undefined,
       product_name: product,
+      assigned_to: pick(techNames),
+      notes: seededRandom() > 0.4 ? pick(orderNotes) : undefined,
+      scheduled_date: status === "pending" || status === "in_progress" ? scheduledDate.toISOString() : undefined,
     });
   }
   return orders.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
@@ -215,15 +337,21 @@ function generateInvoices(): Invoice[] {
       } else {
         status = rand > 0.15 ? "paid" : rand > 0.07 ? "unpaid" : rand > 0.02 ? "overdue" : "void";
       }
+      const lineItems = [{ description: `${plan} — Monthly Service`, amount: price }];
+      if (seededRandom() > 0.8) lineItems.push({ description: "Equipment Rental — Router", amount: 10 });
+      if (seededRandom() > 0.9) lineItems.push({ description: "Static IP Add-on", amount: 15 });
+      const totalAmount = lineItems.reduce((s, l) => s + l.amount, 0);
       invoices.push({
         id: `INV-${invNum++}`,
         account_id: acc.id,
         account_name: acc.name,
-        amount: price,
+        amount: totalAmount,
         status,
         due_date: dueDate.toISOString(),
-        paid_at: status === "paid" ? new Date(dueDate.getTime() + Math.random() * 25 * 86400000).toISOString() : undefined,
+        paid_at: status === "paid" ? new Date(dueDate.getTime() + seededRandom() * 25 * 86400000).toISOString() : undefined,
         created_at: new Date(dueDate.getTime() - 15 * 86400000).toISOString(),
+        line_items: lineItems,
+        payment_method: status === "paid" ? pick(["Visa •••• 4242", "Mastercard •••• 8812", "ACH Bank Transfer", "Check #" + Math.floor(seededRandom() * 9000 + 1000)]) : undefined,
       });
     }
   }

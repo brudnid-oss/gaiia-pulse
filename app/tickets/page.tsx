@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, Suspense } from "react";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import DetailPageLayout from "@/components/DetailPageLayout";
 import DataTable, { Column } from "@/components/ui/DataTable";
 import StatusBadge from "@/components/ui/StatusBadge";
@@ -81,6 +81,7 @@ export default function TicketsPage() {
 }
 
 function TicketsContent() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const statusFilter = searchParams.get("status") || "all";
   const [tickets, setTickets] = useState<Ticket[]>([]);
@@ -122,6 +123,7 @@ function TicketsContent() {
           values: ["open", "in_progress", "resolved", "closed"],
         }}
         defaultFilter={statusFilter}
+        onRowClick={(t) => router.push(`/tickets/${t.id}`)}
       />
     </DetailPageLayout>
   );

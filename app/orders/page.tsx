@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, Suspense } from "react";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import DetailPageLayout from "@/components/DetailPageLayout";
 import DataTable, { Column } from "@/components/ui/DataTable";
 import StatusBadge from "@/components/ui/StatusBadge";
@@ -68,6 +68,7 @@ export default function OrdersPage() {
 }
 
 function OrdersContent() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const statusFilter = searchParams.get("status") || "all";
   const [orders, setOrders] = useState<Order[]>([]);
@@ -109,6 +110,7 @@ function OrdersContent() {
           values: ["pending", "in_progress", "completed", "cancelled"],
         }}
         defaultFilter={statusFilter}
+        onRowClick={(o) => router.push(`/orders/${o.id}`)}
       />
     </DetailPageLayout>
   );
