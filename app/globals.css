@@ -85,6 +85,56 @@ html:not(.dark) .recharts-default-tooltip {
   border-color: #e4e4e7 !important;
 }
 
+/* Mapbox popup dark theme */
+.mapboxgl-popup-content {
+  background: #18181b !important;
+  border: 1px solid #3f3f46 !important;
+  border-radius: 8px !important;
+  padding: 12px !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5) !important;
+  color: #e4e4e7 !important;
+}
+
+.mapboxgl-popup-tip {
+  border-top-color: #18181b !important;
+}
+
+.mapboxgl-popup-close-button {
+  color: #71717a !important;
+  font-size: 16px !important;
+  padding: 4px 8px !important;
+}
+
+.mapboxgl-popup-close-button:hover {
+  color: #fafafa !important;
+  background: transparent !important;
+}
+
+/* Mapbox controls dark theme */
+.mapboxgl-ctrl-group {
+  background: #18181b !important;
+  border: 1px solid #3f3f46 !important;
+  border-radius: 8px !important;
+  overflow: hidden;
+}
+
+.mapboxgl-ctrl-group button {
+  background: transparent !important;
+  border-color: #3f3f46 !important;
+}
+
+.mapboxgl-ctrl-group button + button {
+  border-top: 1px solid #3f3f46 !important;
+}
+
+.mapboxgl-ctrl-group button:hover {
+  background: #27272a !important;
+}
+
+.mapboxgl-ctrl-icon {
+  filter: invert(1) !important;
+}
+
 /* Scrollbar */
 ::-webkit-scrollbar {
   width: 6px;

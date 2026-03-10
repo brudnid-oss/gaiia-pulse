@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import ThemeToggle from "./ui/ThemeToggle";
 import { formatTimestamp } from "@/lib/formatters";
 
@@ -24,6 +25,17 @@ export default function Header({ lastRefresh, onRefresh, refreshing }: HeaderPro
               gaiia <span className="text-emerald-500">Pulse</span>
             </h1>
           </div>
+          <nav className="flex items-center gap-1 ml-1">
+            <span className="rounded-md px-2.5 py-1 text-xs text-emerald-400 bg-emerald-500/10">
+              Dashboard
+            </span>
+            <Link
+              href="/map"
+              className="rounded-md px-2.5 py-1 text-xs text-zinc-500 hover:text-zinc-200 hover:bg-zinc-800/50 transition-colors"
+            >
+              Map
+            </Link>
+          </nav>
           <span className="hidden sm:inline-flex items-center rounded-full bg-zinc-800/80 px-2.5 py-0.5 text-[10px] font-mono text-zinc-500">
             {instanceUrl}
           </span>
