@@ -71,6 +71,7 @@ function OrdersContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const statusFilter = searchParams.get("status") || "all";
+  const typeFilter = searchParams.get("type") || "";
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -81,7 +82,15 @@ function OrdersContent() {
       .finally(() => setLoading(false));
   }, []);
 
-  const pendingCount = orders.filter((o) => o.status === "pending" || o.status === "in_progress").length;
+  // Pre-filter by type when linked from Net Subscriber Adds
+  const typeFiltered = typeFilter
+    ? orders.filter((o) => typeFilter.split(",").includes(o.type))
+    : orders;
+
+  const pendingCount = typeFiltered.filter((o) => o.status === "pending" || o.status === "in_progress").length;
+  const subtitle = typeFilter
+    ? `${typeFiltered.length} orders (${typeFilter.split(",").map((t) => t.replace(/_/g, " ")).join(" & ")})`
+    : `${pendingCount} active · ${typeFiltered.length} total`;
 
   if (loading) {
     return (
@@ -94,9 +103,9 @@ function OrdersContent() {
   }
 
   return (
-    <DetailPageLayout title="Order Pipeline" subtitle={`${pendingCount} active · ${orders.length} total`}>
+    <DetailPageLayout title="Order Pipeline" subtitle={subtitle}>
       <DataTable
-        data={orders}
+        data={typeFiltered}
         columns={columns}
         searchPlaceholder="Search by account, product, or ID..."
         searchFilter={(o, q) =>

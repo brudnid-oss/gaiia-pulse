@@ -14,6 +14,9 @@ import {
   OrderTypeData,
   AccountIssue,
   InventorySummaryData,
+  ARAgingBucket,
+  PlanMixData,
+  ResolutionTrendPoint,
 } from "./types";
 
 // ── Seeded RNG (stable across runs) ──────────────────────────────────────────
@@ -445,6 +448,18 @@ const mrr = Math.round(sumBy(paidInvoices.slice(0, activeCount), "amount") / Mat
 // Inventory counts
 const inventoryByType = countBy(mockInventoryItems, "type");
 
+// Net subscriber adds: new installs vs disconnects this month
+const thisMonthOrders = mockOrders.filter((o) => {
+  const created = new Date(o.created_at);
+  const now = new Date();
+  return created.getMonth() === now.getMonth() && created.getFullYear() === now.getFullYear();
+});
+const newInstallsThisMonth = thisMonthOrders.filter((o) => o.type === "new_install").length || 52;
+const disconnectsThisMonth = thisMonthOrders.filter((o) => o.type === "disconnect").length || 5;
+
+// ARPU: MRR / active subscribers
+const arpu = activeCount > 0 ? Math.round(((mrr || 175420) / activeCount) * 100) / 100 : 0;
+
 export const mockKPIs: KPIData = {
   totalSubscribers: activeCount,
   mrr: mrr || 175420,
@@ -454,6 +469,10 @@ export const mockKPIs: KPIData = {
   overdueAmount: overdueAmount,
   churnCount: cancelledCount,
   churnRate: Number(((cancelledCount / (activeCount + cancelledCount)) * 100).toFixed(1)),
+  arpu,
+  netAdds: newInstallsThisMonth - disconnectsThisMonth,
+  newInstalls: newInstallsThisMonth,
+  disconnects: disconnectsThisMonth,
 };
 
 export const mockRevenueHistory: RevenueDataPoint[] = (() => {
@@ -523,3 +542,55 @@ export const mockInventory: InventorySummaryData = {
     { type: "Access Point", count: inventoryByType["access_point"] || 0 },
   ],
 };
+
+// ── AR Aging Buckets ─────────────────────────────────────────────────────────
+export const mockARAgingBuckets: ARAgingBucket[] = (() => {
+  const now = Date.now();
+  const unpaidAndOverdue = mockInvoices.filter((i) => i.status === "unpaid" || i.status === "overdue");
+  const buckets: Record<string, { count: number; amount: number }> = {
+    "Current": { count: 0, amount: 0 },
+    "1-30": { count: 0, amount: 0 },
+    "31-60": { count: 0, amount: 0 },
+    "61-90": { count: 0, amount: 0 },
+    "90+": { count: 0, amount: 0 },
+  };
+
+  for (const inv of unpaidAndOverdue) {
+    const daysOverdue = Math.floor((now - new Date(inv.due_date).getTime()) / 86400000);
+    let bucket: string;
+    if (daysOverdue <= 0) bucket = "Current";
+    else if (daysOverdue <= 30) bucket = "1-30";
+    else if (daysOverdue <= 60) bucket = "31-60";
+    else if (daysOverdue <= 90) bucket = "61-90";
+    else bucket = "90+";
+    buckets[bucket].count++;
+    buckets[bucket].amount += inv.amount;
+  }
+
+  return Object.entries(buckets).map(([bucket, data]) => ({
+    bucket,
+    count: data.count,
+    amount: Math.round(data.amount),
+  }));
+})();
+
+// ── Plan / Service Mix ───────────────────────────────────────────────────────
+export const mockPlanMix: PlanMixData[] = (() => {
+  const activeWithPlans = mockAccounts.filter((a) => a.status === "active" && a.plan);
+  const planCounts = countBy(activeWithPlans, "plan");
+  return plans.map((plan) => ({
+    plan: plan.replace("Fiber ", ""),
+    count: planCounts[plan] || 0,
+  }));
+})();
+
+// ── Ticket Resolution Time Trend ─────────────────────────────────────────────
+export const mockResolutionTrend: ResolutionTrendPoint[] = (() => {
+  const months = ["Oct", "Nov", "Dec", "Jan", "Feb", "Mar"];
+  // Simulate improving trend from ~18h down to ~12h
+  const baseHours = [18.2, 16.8, 15.4, 14.1, 13.0, 12.3];
+  return months.map((month, i) => ({
+    month,
+    avgHours: Math.round((baseHours[i] + seededRandom() * 2 - 1) * 10) / 10,
+  }));
+})();

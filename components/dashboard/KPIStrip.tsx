@@ -12,8 +12,8 @@ interface KPIStripProps {
 export default function KPIStrip({ data, loading }: KPIStripProps) {
   if (loading || !data) {
     return (
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-        {Array.from({ length: 6 }).map((_, i) => (
+      <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3">
+        {Array.from({ length: 8 }).map((_, i) => (
           <MetricCard key={i} label="" value="" loading />
         ))}
       </div>
@@ -24,7 +24,7 @@ export default function KPIStrip({ data, loading }: KPIStripProps) {
     data.openTickets < 10 ? "good" : data.openTickets <= 25 ? "warning" : "critical";
 
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+    <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3">
       <MetricCard
         label="Total Subscribers"
         value={formatNumber(data.totalSubscribers)}
@@ -32,10 +32,24 @@ export default function KPIStrip({ data, loading }: KPIStripProps) {
         href="/subscribers?status=active"
       />
       <MetricCard
-        label="Monthly Recurring Revenue"
+        label="MRR"
         value={formatCurrency(data.mrr)}
         status="normal"
         href="/invoices?status=paid"
+      />
+      <MetricCard
+        label="ARPU"
+        value={`$${data.arpu.toFixed(2)}`}
+        subValue="per subscriber"
+        status="normal"
+        href="/subscribers?status=active"
+      />
+      <MetricCard
+        label="Net Subscriber Adds"
+        value={`${data.netAdds >= 0 ? "+" : ""}${data.netAdds}`}
+        subValue={`+${data.newInstalls} new / -${data.disconnects} churn`}
+        status={data.netAdds > 0 ? "good" : data.netAdds === 0 ? "warning" : "critical"}
+        href="/orders?type=new_install,disconnect"
       />
       <MetricCard
         label="Open Tickets"

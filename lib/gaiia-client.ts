@@ -8,6 +8,9 @@ import {
   OrderTypeData,
   AccountIssue,
   InventorySummaryData,
+  ARAgingBucket,
+  PlanMixData,
+  ResolutionTrendPoint,
   Ticket,
   Order,
 } from "./types";
@@ -70,15 +73,27 @@ export async function getKPIs(): Promise<KPIData> {
       created_after: new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString(),
     });
 
+    const newInstalls = await apiFetch<{ count: number }>("/orders/count", {
+      type: "new_install",
+      created_after: new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString(),
+    });
+
+    const mrrValue = invoices.data?.[0]?.amount || 0;
+    const arpuValue = activeCount.count > 0 ? Math.round((mrrValue / activeCount.count) * 100) / 100 : 0;
+
     return {
       totalSubscribers: activeCount.count,
-      mrr: invoices.data?.[0]?.amount || 0,
+      mrr: mrrValue,
       openTickets: openTickets.count + inProgressTickets.count,
       pendingOrders: pendingOrders.count,
       overdueInvoices: overdueInvoices.count,
       overdueAmount: 0,
       churnCount: disconnects.count,
       churnRate: allAccounts.count > 0 ? (disconnects.count / allAccounts.count) * 100 : 0,
+      arpu: arpuValue,
+      netAdds: newInstalls.count - disconnects.count,
+      newInstalls: newInstalls.count,
+      disconnects: disconnects.count,
     };
   }, mock.mockKPIs);
 }
@@ -208,4 +223,25 @@ export async function getInventorySummary(): Promise<InventorySummaryData> {
       byType: Object.entries(byType).map(([type, count]) => ({ type, count })),
     };
   }, mock.mockInventory);
+}
+
+export async function getARAgingBuckets(): Promise<ARAgingBucket[]> {
+  return safeCall(async () => {
+    const res = await apiFetch<{ data: ARAgingBucket[] }>("/invoices/aging");
+    return res.data;
+  }, mock.mockARAgingBuckets);
+}
+
+export async function getPlanMix(): Promise<PlanMixData[]> {
+  return safeCall(async () => {
+    const res = await apiFetch<{ data: PlanMixData[] }>("/accounts/plan-mix");
+    return res.data;
+  }, mock.mockPlanMix);
+}
+
+export async function getResolutionTrend(): Promise<ResolutionTrendPoint[]> {
+  return safeCall(async () => {
+    const res = await apiFetch<{ data: ResolutionTrendPoint[] }>("/tickets/resolution-trend");
+    return res.data;
+  }, mock.mockResolutionTrend);
 }

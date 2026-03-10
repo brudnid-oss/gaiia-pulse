@@ -119,6 +119,10 @@ export interface KPIData {
   overdueAmount: number;
   churnCount: number;
   churnRate: number;
+  arpu: number;
+  netAdds: number;
+  newInstalls: number;
+  disconnects: number;
 }
 
 export interface RevenueDataPoint {
@@ -161,4 +165,21 @@ export interface AccountIssue {
 export interface InventorySummaryData {
   total: number;
   byType: { type: string; count: number }[];
+}
+
+// Phase 2 types
+export interface ARAgingBucket {
+  bucket: string;
+  count: number;
+  amount: number;
+}
+
+export interface PlanMixData {
+  plan: string;
+  count: number;
+}
+
+export interface ResolutionTrendPoint {
+  month: string;
+  avgHours: number;
 }

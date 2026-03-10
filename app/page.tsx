@@ -9,6 +9,8 @@ import AccountHealth from "@/components/dashboard/AccountHealth";
 import TicketOverview from "@/components/dashboard/TicketOverview";
 import OrderPipeline from "@/components/dashboard/OrderPipeline";
 import InventorySummary from "@/components/dashboard/InventorySummary";
+import ARAgingChart from "@/components/dashboard/ARAgingChart";
+import PlanMixChart from "@/components/dashboard/PlanMixChart";
 import {
   KPIData,
   RevenueDataPoint,
@@ -21,6 +23,9 @@ import {
   OrderTypeData,
   Order,
   InventorySummaryData,
+  ARAgingBucket,
+  PlanMixData,
+  ResolutionTrendPoint,
 } from "@/lib/types";
 
 const REFRESH_INTERVAL = parseInt(process.env.NEXT_PUBLIC_REFRESH_INTERVAL_MS || "300000", 10);
@@ -37,6 +42,9 @@ interface DashboardData {
   orderTypes: OrderTypeData[] | null;
   recentOrders: Order[] | null;
   inventory: InventorySummaryData | null;
+  arAging: ARAgingBucket[] | null;
+  planMix: PlanMixData[] | null;
+  resolutionTrend: ResolutionTrendPoint[] | null;
 }
 
 async function fetchJSON<T>(url: string): Promise<T> {
@@ -58,6 +66,9 @@ export default function Dashboard() {
     orderTypes: null,
     recentOrders: null,
     inventory: null,
+    arAging: null,
+    planMix: null,
+    resolutionTrend: null,
   });
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -72,12 +83,12 @@ export default function Dashboard() {
       // Stagger requests slightly to avoid hammering
       const [accountsRes, invoicesRes, paymentsRes, ticketsRes, ordersRes, inventoryRes] =
         await Promise.all([
-          fetchJSON<{ kpis: KPIData; status: AccountStatusData[]; issues: AccountIssue[] }>(
+          fetchJSON<{ kpis: KPIData; status: AccountStatusData[]; issues: AccountIssue[]; planMix: PlanMixData[] }>(
             "/api/accounts"
           ),
-          fetchJSON<{ status: InvoiceStatusData[] }>("/api/invoices"),
+          fetchJSON<{ status: InvoiceStatusData[]; arAging: ARAgingBucket[] }>("/api/invoices"),
           fetchJSON<{ history: RevenueDataPoint[] }>("/api/payments"),
-          fetchJSON<{ status: TicketStatusData[]; recent: Ticket[] }>("/api/tickets"),
+          fetchJSON<{ status: TicketStatusData[]; recent: Ticket[]; resolutionTrend: ResolutionTrendPoint[] }>("/api/tickets"),
           fetchJSON<{ status: OrderStatusData[]; types: OrderTypeData[]; recent: Order[] }>(
             "/api/orders"
           ),
@@ -96,6 +107,9 @@ export default function Dashboard() {
         orderTypes: ordersRes.types,
         recentOrders: ordersRes.recent,
         inventory: inventoryRes.summary,
+        arAging: invoicesRes.arAging,
+        planMix: accountsRes.planMix,
+        resolutionTrend: ticketsRes.resolutionTrend,
       });
       setLastRefresh(new Date());
       setError(null);
@@ -139,6 +153,12 @@ export default function Dashboard() {
           <InvoiceBreakdown data={data.invoiceStatus} loading={loading} />
         </div>
 
+        {/* AR Aging & Plan Mix */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <ARAgingChart data={data.arAging} loading={loading} />
+          <PlanMixChart data={data.planMix} loading={loading} />
+        </div>
+
         {/* Subscriber Health */}
         <AccountHealth
           statusData={data.accountStatus}
@@ -151,6 +171,7 @@ export default function Dashboard() {
           <TicketOverview
             statusData={data.ticketStatus}
             recentTickets={data.recentTickets}
+            resolutionTrend={data.resolutionTrend}
             loading={loading}
           />
           <OrderPipeline

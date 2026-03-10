@@ -9,16 +9,19 @@ import {
   Tooltip,
   ResponsiveContainer,
   Cell,
+  LineChart,
+  Line,
 } from "recharts";
 import ChartCard from "../ui/ChartCard";
 import StatusBadge from "../ui/StatusBadge";
-import { TicketStatusData, Ticket } from "@/lib/types";
+import { TicketStatusData, Ticket, ResolutionTrendPoint } from "@/lib/types";
 import { formatNumber, formatRelativeTime } from "@/lib/formatters";
 import { tooltipStyle } from "@/lib/chart-theme";
 
 interface TicketOverviewProps {
   statusData: TicketStatusData[] | null;
   recentTickets: Ticket[] | null;
+  resolutionTrend: ResolutionTrendPoint[] | null;
   loading: boolean;
 }
 
@@ -32,6 +35,7 @@ const COLORS: Record<string, string> = {
 export default function TicketOverview({
   statusData,
   recentTickets,
+  resolutionTrend,
   loading,
 }: TicketOverviewProps) {
   return (
@@ -91,6 +95,43 @@ export default function TicketOverview({
               ))}
             </div>
           </div>
+
+          {/* Resolution Time Trend */}
+          {resolutionTrend && resolutionTrend.length > 0 && (
+            <div className="border-t border-zinc-800 pt-3">
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-[10px] uppercase tracking-wider text-zinc-600">
+                  Avg Resolution Time (hours)
+                </p>
+                <span className="text-xs font-mono text-emerald-400">
+                  {resolutionTrend[resolutionTrend.length - 1].avgHours}h
+                </span>
+              </div>
+              <ResponsiveContainer width="100%" height={100}>
+                <LineChart data={resolutionTrend} margin={{ top: 5, right: 5, left: 0, bottom: 0 }}>
+                  <XAxis
+                    dataKey="month"
+                    tick={{ fill: "#71717a", fontSize: 10 }}
+                    tickLine={false}
+                    axisLine={false}
+                  />
+                  <YAxis hide domain={["dataMin - 2", "dataMax + 2"]} />
+                  <Tooltip
+                    {...tooltipStyle}
+                    formatter={(value: any) => [`${value}h`, "Avg Resolution"]}
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="avgHours"
+                    stroke="#10B981"
+                    strokeWidth={2}
+                    dot={{ fill: "#10B981", r: 3 }}
+                    activeDot={{ r: 5, fill: "#10B981" }}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          )}
         </div>
       )}
     </ChartCard>

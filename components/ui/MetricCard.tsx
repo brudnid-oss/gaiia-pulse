@@ -42,11 +42,11 @@ export default function MetricCard({
       <p className="text-xs font-medium uppercase tracking-wider text-zinc-500 mb-1">
         {label}
       </p>
-      <p className={`text-2xl sm:text-3xl font-mono font-semibold ${statusColors[status]}`}>
+      <p className={`font-mono font-semibold ${value.length > 7 ? "text-xl sm:text-2xl" : "text-2xl sm:text-3xl"} ${statusColors[status]}`}>
         {value}
       </p>
       {subValue && (
-        <p className="text-xs text-zinc-500 mt-1 font-mono">{subValue}</p>
+        <p className="text-[10px] text-zinc-500 mt-1 font-mono whitespace-nowrap">{subValue}</p>
       )}
       {href && (
         <p className="text-[10px] text-zinc-600 mt-2 group-hover:text-emerald-500 transition-colors">
